@@ -43,6 +43,11 @@ def unzipped(job):
     return all([is_unzipped(job, field + '.zip') for field in FIELDS])
 
 
+@Project.label
+def labeled(job):
+    return all([job.isfile(field + '.csv') for field in FIELDS])
+
+
 @Project.operation
 @Project.post(valid_data)
 def fetch_data(job):
@@ -94,11 +99,22 @@ def determine_size(job):
 @Project.operation
 @Project.pre.after(fetch_data)
 @Project.pre.not_(has_readmes)
+@Project.pre.not_(labeled)
 @Project.post(unzipped)
 @with_job
 @cmd
 def unzip_data(job):
     return '; '.join(['unzip -o -DD {}.zip'.format(fn) for fn in FIELDS])
+
+
+@Project.operation
+@Project.pre.after(unzipped)
+@Project.post(labeled)
+@with_job
+@cmd
+def label_data(job):
+    return '; '.join(['mv -v Origin_and_Destination_Survey_DB1B{field}_{year}_{quarter}.csv {field}.csv'.format(
+        field=field, **job.sp) for field in FIELDS])
 
 
 if __name__ == '__main__':
