@@ -14,6 +14,10 @@ def valid_zip(job, filename):
     return job.isfile(filename) and zipfile.is_zipfile(job.fn(filename))
 
 
+def is_unzipped(job, filename):
+    return all([job.isfile(f) for f in zipfile.ZipFile(job.fn(filename)).namelist()])
+
+
 @Project.label
 def valid_data(job):
     return all([valid_zip(job, field + '.zip') for field in FIELDS])
@@ -32,6 +36,11 @@ def has_readmes(job):
 @Project.label
 def has_counts(job):
     return all([field in job.doc and 'shape' in job.doc[field] for field in FIELDS])
+
+
+@Project.label
+def unzipped(job):
+    return all([is_unzipped(job, field + '.zip') for field in FIELDS])
 
 
 @Project.operation
@@ -80,6 +89,16 @@ def determine_size(job):
         df = pd.read_csv(job.fn(fn))
         print('Shape: {}'.format(df.shape))
         job.doc[field] = {'shape': df.shape}
+
+
+@Project.operation
+@Project.pre.after(fetch_data)
+@Project.pre.not_(has_readmes)
+@Project.post(unzipped)
+@with_job
+@cmd
+def unzip_data(job):
+    return '; '.join(['unzip -o -DD {}.zip'.format(fn) for fn in FIELDS])
 
 
 if __name__ == '__main__':
