@@ -1,4 +1,6 @@
 signac.rc
 view/
-workspace/
+workspace
+hdfs_workspace
+*.ipynb_checkpoints*
 __pycache__
