@@ -55,6 +55,11 @@ def has_edges(job):
 
 
 @Project.label
+def has_edgefile(job):
+    return job.isfile('all_edges.tsv')
+
+
+@Project.label
 def has_itins(job):
     return job.isfile('hon_itineraries.txt/_SUCCESS')
 
@@ -169,6 +174,15 @@ def extract_edges(job):
         df_network = df[col_names].repartition('OriginAirportID')
         edges = df_network.groupby(['OriginAirportID', 'DestAirportID']).agg(count('ItinID').alias('weight'))
         edges.rdd.map(make_line).saveAsTextFile(hdfs_fn(job, 'edges.tsv'))
+
+
+@Project.operation
+@Project.pre.after(extract_edges)
+@Project.post(has_edgefile)
+@with_job
+@cmd
+def combine_edgefile(job):
+    return 'cat edges.tsv/part-* | sort > all_edges.tsv'
 
 
 @Project.operation
