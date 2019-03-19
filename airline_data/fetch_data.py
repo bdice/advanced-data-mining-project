@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 import signac
 from tqdm import tqdm
-import os
 import urllib.request
 
 
