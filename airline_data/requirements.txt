@@ -1,5 +1,6 @@
+findspark
+networkx
 pandas
 signac
 signac-flow
 tqdm
-findspark
