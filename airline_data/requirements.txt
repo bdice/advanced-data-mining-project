@@ -1,3 +1,5 @@
+findspark
+networkx
 pandas
 signac
 signac-flow

@@ -8,4 +8,3 @@ for job in project:
     for fn in counts:
         counts[fn] += job.doc.get(fn, {'shape': (0, 0)})['shape'][0]
     print(counts)
-
