@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 from flow import FlowProject, cmd, with_job
 import zipfile
+from contextlib import contextmanager
 
 
 FIELDS = ('Coupon', 'Market', 'Ticket')
@@ -58,9 +59,13 @@ def has_itins(job):
     return job.isfile('hon_itineraries.txt/_SUCCESS')
 
 
-def build_spark():
+def find_spark():
     import findspark
     findspark.init('/usr/hdp/current/spark2-client')
+
+
+@contextmanager
+def build_spark():
     from pyspark import SparkConf
     from pyspark.sql import SparkSession
     conf = (SparkConf().setMaster("yarn-client").setAppName("AirlineDataAnalysis")
@@ -151,6 +156,7 @@ def label_data(job):
 @Project.pre.after(labeled)
 @Project.post(has_edges)
 def extract_edges(job):
+    find_spark()
     from util import hdfs_fn
     from pyspark.sql.functions import count
 
@@ -169,6 +175,7 @@ def extract_edges(job):
 @Project.pre.after(labeled)
 @Project.post(has_itins)
 def extract_itineraries(job):
+    find_spark()
     from util import hdfs_fn
     from pyspark.sql.functions import collect_list, first, last
 
