@@ -50,6 +50,11 @@ def labeled(job):
 
 
 @Project.label
+def has_IATA(job):
+    return job.isfile('airport_codes.csv')
+
+
+@Project.label
 def has_edges(job):
     return job.isfile('edges.tsv/_SUCCESS')
 
@@ -155,6 +160,31 @@ def unzip_data(job):
 def label_data(job):
     return '; '.join(['mv -v Origin_and_Destination_Survey_DB1B{field}_{year}_{quarter}.csv {field}.csv'.format(
         field=field, **job.sp) for field in FIELDS])
+
+
+@Project.operation
+@Project.pre.after(labeled)
+@Project.post(has_IATA)
+def get_IATA(job):
+    import numpy as np
+    import pandas as pd
+    from tqdm import tqdm
+    from util import coupon_dtypes
+    cols = ['OriginAirportID', 'Origin', 'DestAirportID', 'Dest']
+    dtypes = {c: coupon_dtypes[c] for c in cols}
+    chunksize = 100000
+    reader = pd.read_csv(job.fn('Coupon.csv'), usecols=dtypes.keys(), dtype=dtypes, chunksize=chunksize)
+    airport_codes = {}
+    for chunk in tqdm(reader, total=int(np.ceil(job.doc['Coupon']['shape'][0]/chunksize))):
+        for i, origin_id, origin_iata, dest_id, dest_iata in chunk.itertuples():
+            if origin_id not in airport_codes:
+                airport_codes[origin_id] = origin_iata
+            if dest_id not in airport_codes:
+                airport_codes[dest_id] = dest_iata
+    airport_df = pd.DataFrame.from_dict(airport_codes, orient='index').sort_index()
+    airport_df.index.name = 'ID'
+    airport_df.columns = ['IATA']
+    airport_df.to_csv(job.fn('airport_codes.csv'))
 
 
 @Project.operation
