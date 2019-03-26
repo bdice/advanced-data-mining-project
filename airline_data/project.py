@@ -4,7 +4,8 @@ import zipfile
 from contextlib import contextmanager
 
 
-FIELDS = ('Coupon', 'Market', 'Ticket')
+#FIELDS = ('Coupon', 'Market', 'Ticket')
+FIELDS = ('Coupon',)
 
 
 class Project(FlowProject):
