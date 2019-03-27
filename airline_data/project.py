@@ -137,9 +137,13 @@ def determine_size(job):
             continue
         fn = field + '.zip'
         print('Reading {}'.format(job.fn(fn)))
-        df = pd.read_csv(job.fn(fn))
-        print('Shape: {}'.format(df.shape))
-        job.doc[field] = {'shape': df.shape}
+        shape = [0, 0]
+        for chunk in pd.read_csv(job.fn(fn), chunksize=100000):
+            chunk_shape = chunk.shape
+            shape[0] += chunk_shape[0]
+            shape[1] = max(shape[1], chunk_shape[1])
+        print('Shape: {}'.format(shape))
+        job.doc[field] = {'shape': shape}
 
 
 @Project.operation
