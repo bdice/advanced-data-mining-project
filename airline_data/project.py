@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 from flow import FlowProject, cmd, with_job
 import zipfile
 from contextlib import contextmanager
