@@ -172,7 +172,7 @@ def unzip_data(job):
 
 
 @Project.operation
-@Project.pre.after(unzipped)
+@Project.pre.after(unzip_data)
 @Project.post(labeled)
 @with_job
 @cmd
@@ -182,7 +182,7 @@ def label_data(job):
 
 
 @Project.operation
-@Project.pre.after(labeled)
+@Project.pre.after(label_data)
 @Project.post(has_IATA)
 def get_IATA(job):
     import numpy as np
@@ -207,7 +207,7 @@ def get_IATA(job):
 
 
 @Project.operation
-@Project.pre.after(labeled)
+@Project.pre.after(label_data)
 @Project.post(has_edges)
 def extract_edges(job):
     find_spark()
@@ -235,7 +235,7 @@ def combine_edgefile(job):
 
 
 @Project.operation
-@Project.pre.after(labeled)
+@Project.pre.after(label_data)
 @Project.post(has_itins)
 def extract_itineraries(job):
     find_spark()
