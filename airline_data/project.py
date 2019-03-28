@@ -37,7 +37,9 @@ def has_readmes(job):
 
 @Project.label
 def has_counts(job):
-    return all([field in job.doc and 'shape' in job.doc[field] for field in FIELDS])
+    return all([field in job.doc and \
+                'shape' in job.doc[field] and \
+                'file_size' in job.doc[field] for field in FIELDS])
 
 
 @Project.label
@@ -133,17 +135,29 @@ def remove_readmes(job):
 def determine_size(job):
     import pandas as pd
     for field in FIELDS:
-        if field in job.doc and 'shape' in job.doc[field]:
-            continue
-        fn = field + '.zip'
-        print('Reading {}'.format(job.fn(fn)))
-        shape = [0, 0]
-        for chunk in pd.read_csv(job.fn(fn), chunksize=100000):
-            chunk_shape = chunk.shape
-            shape[0] += chunk_shape[0]
-            shape[1] = max(shape[1], chunk_shape[1])
-        print('Shape: {}'.format(shape))
-        job.doc[field] = {'shape': shape}
+        if field not in job.doc:
+            job.doc[field] = {}
+
+        # unzipped size
+        if 'file_size' not in job.doc[field]:
+            fn = field + '.zip'
+            zf = zipfile.ZipFile(job.fn(fn))
+            info = zf.infolist()
+            size = info[0].file_size
+            print('File size: {}'.format(size))
+            job.doc[field]['file_size'] = size
+
+        # CSV shape
+        if 'shape' not in job.doc[field]:
+            fn = field + '.zip'
+            print('Reading {}'.format(job.fn(fn)))
+            shape = [0, 0]
+            for chunk in pd.read_csv(job.fn(fn), chunksize=100000):
+                chunk_shape = chunk.shape
+                shape[0] += chunk_shape[0]
+                shape[1] = max(shape[1], chunk_shape[1])
+            print('Shape: {}'.format(shape))
+            job.doc[field]['shape'] = shape
 
 
 @Project.operation
