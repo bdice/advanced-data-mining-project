@@ -43,6 +43,14 @@ The command `python project.py status -d` shows the status of the workflow, incl
 
 ### Data Format
 
+The `all_edges.tsv` file follows this format:
+
+```
+origin_id destination_id count
+```
+
+where `origin_id` and `destination_id` come from the DB1B data's identifiers and `count` is the number of coupons found for that edge.
+
 The `all_hon_itineraries.txt` file follows the line input format required by the pyHON code [1]:
 
 ```
