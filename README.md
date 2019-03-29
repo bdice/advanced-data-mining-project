@@ -7,7 +7,7 @@ Dan McCusker ([@dm1181](https://github.com/dm1181/))
 
 This repository contains code for using higher-order networks [1] to analyze U.S. airline ticket data from 1993 Q1 to 2018 Q3.
 The data is provided by the Bureau of Transportation Statistics [2].
-This project was completed for the course Advanced Data Mining [3].
+This project was completed for the course Advanced Data Mining with Danai Koutra (EECS 598, Winter 2019) at the University of Michigan [3].
 
 ## Airline Data Acquisition
 
@@ -43,7 +43,7 @@ The command `python project.py status -d` shows the status of the workflow, incl
 
 ### Data Format
 
-The `all_hon_itineraries.txt` file follows the input format required by the pyHON code [1]:
+The `all_hon_itineraries.txt` file follows the line input format required by the pyHON code [1]:
 
 ```
 unique_id node1 node2 node3 node4 ... nodeN
