@@ -73,6 +73,11 @@ def has_itins(job):
     return job.isfile('hon_itineraries.txt/_SUCCESS')
 
 
+@Project.label
+def has_itineraryfile(job):
+    return job.isfile('all_hon_itineraries.txt')
+
+
 def find_spark():
     import findspark
     findspark.init('/usr/hdp/current/spark2-client')
@@ -232,7 +237,8 @@ def extract_edges(job):
 @with_job
 @cmd
 def combine_edgefile(job):
-    return 'cat edges.tsv/part-* | sort > all_edges.tsv'
+    return '; '.join(['echo "Combining edges for job {}..."'.format(job._id),
+                      'cat edges.tsv/part-* | sort > all_edges.tsv'])
 
 
 @Project.operation
@@ -258,6 +264,16 @@ def extract_itineraries(job):
             collect_list('OriginAirportID').alias('OriginAirportIDs'),
             last('DestAirportID').alias('LastAirportID'))
         itins.rdd.map(make_line).saveAsTextFile(hdfs_fn(job, 'hon_itineraries.txt'))
+
+
+@Project.operation
+@Project.pre.after(extract_itineraries)
+@Project.post(has_itineraryfile)
+@with_job
+@cmd
+def combine_itineraries(job):
+    return '; '.join(['echo "Combining itineraries for job {}..."'.format(job._id),
+                      'cat hon_itineraries.txt/part-* | sort > all_hon_itineraries.txt'])
 
 
 if __name__ == '__main__':
