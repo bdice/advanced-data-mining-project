@@ -360,7 +360,7 @@ def make_plots(job):
     sizes = 10000*airports.PageRank.values
 
     dots = ax.scatter(xs, ys, transform=ccrs.PlateCarree(), c=colors, s=sizes, alpha=0.8, zorder=10,
-                      norm=mcolors.LogNorm(vmin=colors.min(), vmax=colors.max()), cmap='viridis')
+                      norm=mcolors.LogNorm(vmin=1e-4, vmax=1e-1), cmap='viridis')
 
     for row in airports.itertuples():
         if row.PageRankPercentile > 0.90:
