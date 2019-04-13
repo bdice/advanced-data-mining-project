@@ -17,7 +17,10 @@ This section refers to the code in the subdirectory `airline_data`, which fetche
 
 Use the requirements file (`pip install -U -r requirements.txt`) to get the dependencies for these data acquisition scripts.
 
-It was necessary to use Python 2 for compatibility with Spark 2.2 on the flux-hadoop cluster.
+Installation notes:
+
+- It was necessary to use Python 2 for compatibility with Spark 2.2 on the flux-hadoop cluster.
+- The dependency `cartopy` is much easier to install via `conda` than `pip`. It is only needed for generating map visualizations.
 
 ### Procedure
 
@@ -36,6 +39,7 @@ Run `python project.py run --progress --show-traceback` to execute the workflow:
 9. `extract_itineraries`: Use PySpark to combine all trajectories from the same itinerary, output to `hon_itineraries.txt/part-*`.
 10. `combine_itineraries`: Combine the (distributed) outputs from `hon_itineraries.txt/part-*` into one file, `all_hon_itineraries.txt`.
 
+Users may specify which operations should be run with the `-o operation_name` flag, like `python project.py run -o fetch_data --progress --show-traceback`.
 For the data generation in this project, operations 1-5 were run on a local directory.
 Then, the data was copied into HDFS and operations 6-10 were run on HDFS (accessed via hadoop-fuse).
 
