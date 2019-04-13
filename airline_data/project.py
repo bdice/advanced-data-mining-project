@@ -78,6 +78,12 @@ def has_itineraryfile(job):
     return job.isfile('all_hon_itineraries.txt')
 
 
+@Project.label
+def has_plots(job):
+    PLOTS = ('pr_1st_order.png',)
+    return all([job.isfile(fn) for fn in PLOTS])
+
+
 def find_spark():
     import findspark
     findspark.init('/usr/hdp/current/spark2-client')
@@ -274,6 +280,97 @@ def extract_itineraries(job):
 def combine_itineraries(job):
     return '; '.join(['echo "Combining itineraries for job {}..."'.format(job._id),
                       'cat hon_itineraries.txt/part-* | sort > all_hon_itineraries.txt'])
+
+
+@Project.operation
+@Project.pre.after(combine_edgefile)
+@Project.post(has_plots)
+def make_plots(job):
+    import matplotlib
+    import matplotlib.colors as mcolors
+    import matplotlib.patches as mpatches
+    import matplotlib.pyplot as plt
+    import networkx as nx
+    import numpy as np
+    import pandas as pd
+    import cartopy.crs as ccrs
+    import cartopy.io.shapereader as shpreader
+
+    project = Project()
+
+    if not project.isfile('airport_geodata.csv'):
+        import urllib.request
+        url = 'https://datahub.io/core/airport-codes/r/airport-codes.csv'
+        urllib.request.urlretrieve(url, project.fn('airport_geodata.csv'))
+
+    print('Reading airport geodata...')
+    geodata = pd.read_csv(project.fn('airport_geodata.csv'))
+    geodata = geodata.dropna(subset=['iata_code'])
+    geodata = geodata[geodata['iso_country'] == 'US']
+    geodata = geodata[['name', 'iata_code', 'coordinates']].set_index('iata_code')
+    coords = geodata['coordinates'].str.split(', ', expand=True)
+    geodata['lon'] = pd.to_numeric(coords[0])
+    geodata['lat'] = pd.to_numeric(coords[1])
+    geodata = geodata.drop(columns=['coordinates'])
+
+    # Ignore airports with erroneous data near (0, 0)
+    geodata = geodata[geodata.lon < -65]
+
+    # Drop data for Alaska and Hawaii
+    geodata = geodata[geodata.lon > -130]
+
+    print('Reading edge list...')
+    G = nx.read_weighted_edgelist(job.fn('all_edges.tsv'), create_using=nx.DiGraph())
+    iatas = pd.read_csv(job.fn('airport_codes.csv'))
+    iatas['ID'] = pd.to_numeric(iatas['ID'])
+    iatas = iatas.set_index('ID')
+    pageranks = pd.DataFrame.from_dict(nx.pagerank(G), orient='index')
+    pageranks.columns = ['PageRank']
+    pageranks.index = pd.to_numeric(pageranks.index)
+    iatas = iatas.join(pageranks)
+
+    airports = pd.merge(iatas, geodata, left_on='IATA', right_index=True)
+    airports['PageRankPercentile'] = airports['PageRank'].rank(pct=True)
+
+    print('Generating plot...')
+    fig = plt.figure(figsize=(6, 4), dpi=400)
+    ax = fig.add_axes([0, 0, 1, 1], projection=ccrs.LambertConformal())
+    ax.set_extent([-128, -64, 22, 49], ccrs.Geodetic())
+
+    shapename = 'admin_1_states_provinces_shp'
+    states_shp = shpreader.natural_earth(resolution='110m',
+                                         category='cultural', name=shapename)
+
+    ax.background_patch.set_visible(False)
+    ax.outline_patch.set_visible(False)
+    plt.title('PageRanks from First-Order Network ({}Q{})'.format(job.sp.year, job.sp.quarter))
+
+    def colorize_state(geometry):
+        facecolor = (0.9375, 0.9375, 0.8594)
+        return {'facecolor': facecolor, 'edgecolor': 'black'}
+
+    ax.add_geometries(
+        shpreader.Reader(states_shp).geometries(),
+        ccrs.PlateCarree(),
+        styler=colorize_state)
+
+    xs = airports.lon.values
+    ys = airports.lat.values
+    colors = airports.PageRank.values
+    sizes = 10000*airports.PageRank.values
+
+    dots = ax.scatter(xs, ys, transform=ccrs.PlateCarree(), c=colors, s=sizes, alpha=0.8, zorder=10,
+                      norm=mcolors.LogNorm(vmin=colors.min(), vmax=colors.max()), cmap='viridis')
+
+    for row in airports.itertuples():
+        if row.PageRankPercentile > 0.90:
+            ax.annotate(row.IATA, (row.lon, row.lat), xycoords=ccrs.PlateCarree()._as_mpl_transform(ax),
+                        fontsize=40*row.PageRank**0.2, alpha=row.PageRankPercentile, zorder=11,
+                        ha='center', va='center')
+    cbax = fig.add_axes([0.9, 0.1, 0.03, 0.8])
+    plt.colorbar(dots, cax=cbax)
+    plt.savefig(job.fn('pr_1st_order.png'))
+    plt.close()
 
 
 if __name__ == '__main__':
