@@ -5,4 +5,4 @@ hdfs_workspace
 *.ipynb_checkpoints*
 __pycache__
 plots/1st_order*
-plot/hon*
+plots/hon*
