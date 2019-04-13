@@ -373,5 +373,17 @@ def make_plots(job):
     plt.close()
 
 
+@Project.operation
+@Project.pre.after(combine_itineraries)
+@Project.post.isfile('hon_rules.txt')
+@Project.post.isfile('hon_network.txt')
+def generate_hon(job):
+    from pyHON import generate
+    print('Generating HON for {year}Q{quarter}'.format(**job.sp))
+    generate(job.fn('all_hon_itineraries.txt'),
+             job.fn('hon_rules.txt'),
+             job.fn('hon_network.txt'))
+
+
 if __name__ == '__main__':
     Project().main()
