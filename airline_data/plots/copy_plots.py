@@ -6,8 +6,11 @@ from tqdm import tqdm
 
 project = signac.get_project()
 
-os.makedirs('1st_order', exist_ok=True)
-
-for job in tqdm(sorted(project, key=lambda job: (job.sp.year, job.sp.quarter))):
-    shutil.copyfile(job.fn('pr_1st_order.png'),
-                    os.path.join('1st_order', '{}Q{}.png'.format(job.sp.year, job.sp.quarter)))
+for plot_type in ('1st_order', 'hon'):
+    if not os.path.exists(plot_type):
+        os.makedirs(plot_type)
+    for job in tqdm(sorted(project, key=lambda job: (job.sp.year, job.sp.quarter))):
+        source_fn = job.fn('pr_{}.png'.format(plot_type))
+        if os.path.exists(source_fn):
+            shutil.copyfile(source_fn, os.path.join(
+                plot_type, '{}Q{}.png'.format(job.sp.year, job.sp.quarter)))
