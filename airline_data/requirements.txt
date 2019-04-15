@@ -1,4 +1,6 @@
+cartopy
 findspark
+matplotlib
 networkx
 pandas
 signac

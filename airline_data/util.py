@@ -1,3 +1,4 @@
+import numpy as np
 import os
 from tqdm import tqdm
 
@@ -22,3 +23,49 @@ class TqdmUpTo(tqdm):
 def hdfs_fn(job, filename):
     """Prepend a filename with the job's HDFS workspace directory path."""
     return os.path.join(job._project.config['hdfs_dir'], job._id, filename)
+
+
+coupon_dtypes = {
+    'ItinID': np.int64,
+    'MktID': np.int64,
+    'SeqNum': np.int8,
+    'Coupons': np.int8,
+    'Year': np.int16,
+    'OriginAirportID': np.int16,
+    'OriginAirportSeqID': np.int32,
+    'OriginCityMarketID': np.int32,
+    'Quarter': np.int8,
+    'Origin': str,
+    'OriginCountry': str,
+    'OriginStateFips': np.int8,
+    'OriginState': str,
+    'OriginStateName': str,
+    'OriginWac': np.int8,
+    'DestAirportID': np.int16,
+    'DestAirportSeqID': np.int32,
+    'DestCityMarketID': np.int32,
+    'Dest': str,
+    'DestCountry': str,
+    'DestStateFips': np.int8,
+    'DestState': str,
+    'DestStateName': str,
+    'DestWac': np.int8,
+    'Break': str,
+    'CouponType': str,
+    'TkCarrier': str,
+    'OpCarrier': str,
+    'RPCarrier': str,
+    'Passengers': np.float32,
+    'FareClass': str,
+    'Distance': np.float32,
+    'DistanceGroup': np.int8,
+    'ItinGeoType': np.int8,
+    'CouponGeoType': np.int8}
+
+
+def sizeof_fmt(num, suffix='B'):
+    for unit in ['','Ki','Mi','Gi','Ti','Pi','Ei','Zi']:
+        if abs(num) < 1024.0:
+            return "%3.1f%s%s" % (num, unit, suffix)
+        num /= 1024.0
+    return "%.1f%s%s" % (num, 'Yi', suffix)
