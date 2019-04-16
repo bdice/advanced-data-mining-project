@@ -6,3 +6,5 @@ hdfs_workspace
 __pycache__
 plots/1st_order*
 plots/hon*
+.signac_sp_cache.json.gz
+signac_project_document.json
