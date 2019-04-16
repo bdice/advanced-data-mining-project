@@ -461,5 +461,85 @@ def plot_hon_pagerank(job):
     plt.close()
 
 
+@Project.operation
+@Project.pre.after(generate_hon)
+@Project.post.isfile('hon_infomap.txt')
+def hon_prepare_infomap(job):
+    import json
+    from collections import OrderedDict
+
+    vertices = set()
+    state_nodes = OrderedDict()
+    edges = set()
+    with open(job.fn('hon_network.txt'), 'r') as hon_network:
+        # Line format is [FromNode],[ToNode],weight
+        # where [FromNode] and [ToNode] have format current_node|past0.past1...
+        from_nodes, to_nodes, weights = \
+            zip(*map(lambda line: line.strip().split(','),
+                     hon_network.readlines()))
+
+    for from_node, to_node in zip(from_nodes, to_nodes):
+        physical_name_from = from_node.split('|')[0]
+        physical_name_to = to_node.split('|')[0]
+        vertices.add(physical_name_to)
+        vertices.add(physical_name_from)
+
+    keys = list(range(1, len(vertices)+1))
+    vertices = OrderedDict(zip(vertices, keys))
+
+    # Save the mapping to the arbitrary keys used for InfoMap compatibility
+    with open(job.fn('hon_infomap_vertex_keys.json'), 'w') as f:
+        json.dump(vertices, f)
+    with open(job.fn('hon_infomap_key_vertices.json'), 'w') as f:
+        json.dump({v: k for k, v in vertices.items()}, f)
+
+    # Now, go through and get unique ID's for state nodes, use dict to get their
+    # matching physical node
+    unique_ID = 1
+    for from_node, to_node in zip(from_nodes, to_nodes):
+        physical_name_from = from_node.split('|')[0]
+        physical_name_to = to_node.split('|')[0]
+
+        physical_ID_from = vertices[physical_name_from]
+        physical_ID_to = vertices[physical_name_to]
+
+        if from_node not in state_nodes:
+            state_nodes[from_node] = (unique_ID, physical_ID_from)
+            unique_ID += 1
+        if to_node not in state_nodes:
+            state_nodes[to_node] = (unique_ID, physical_ID_to)
+            unique_ID += 1
+
+    # Finally, get edge weights
+    for from_node, to_node, weight in zip(from_nodes, to_nodes, weights):
+        edges.add((state_nodes[from_node][0], state_nodes[to_node][0], weight))
+
+    with open(job.fn('hon_infomap.txt'), 'w') as f:
+        f.write("*Vertices {}\n".format(len(vertices)))
+        for vertex in vertices:
+            f.write("{} {}\n".format(str(vertices[vertex]), vertex))
+        f.write("*States\n")
+        for node in state_nodes:
+            f.write("{} {} {}\n".format(str(state_nodes[node][0]),
+                                        str(state_nodes[node][1]),
+                                        str(node)))
+        f.write("*Links\n")
+        for edge in edges:
+            f.write('{} {} {}\n'.format(edge[0], edge[1], edge[2]))
+
+
+@Project.operation
+@Project.pre.after(hon_prepare_infomap)
+@Project.post.isfile('hon_infomap.clu')
+@Project.post.isfile('hon_infomap.tree')
+@cmd
+def hon_infomap(job):
+    return ('../infomap/Infomap --clu --tree -d -i states '
+            '{input} {output}').format(
+                input=job.fn('hon_infomap.txt'),
+                output=job.ws)
+
+
+
 if __name__ == '__main__':
     Project().main()
