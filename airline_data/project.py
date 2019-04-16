@@ -534,11 +534,109 @@ def hon_prepare_infomap(job):
 @Project.post.isfile('hon_infomap.tree')
 @cmd
 def hon_infomap(job):
-    return ('../infomap/Infomap --clu --tree -d -i states '
+    return ('../infomap/Infomap --clu --tree -vv -d -i states '
             '{input} {output}').format(
                 input=job.fn('hon_infomap.txt'),
                 output=job.ws)
 
+@Project.operation
+@Project.pre.after(hon_infomap)
+@Project.post.isfile('hon_communities.csv')
+def plot_hon_communities(job):
+    import matplotlib
+    matplotlib.use('Agg')
+    import matplotlib.colors as mcolors
+    import matplotlib.patches as mpatches
+    import matplotlib.pyplot as plt
+    import networkx as nx
+    import numpy as np
+    import os
+    import pandas as pd
+    import cartopy.crs as ccrs
+    import cartopy.io.shapereader as shpreader
+    paths = pd.read_csv(job.fn('hon_infomap.tree'), sep=' ', header=None,
+                        skiprows=2, names=['path', 'flow', 'ID', 'node'])
+    paths['path'] = paths['path'].apply(lambda x: tuple(map(int, x.split(':'))))
+    iatas = pd.read_csv(job.fn('airport_codes.csv'))
+    iatas['ID'] = pd.to_numeric(iatas['ID'])
+    iatas = iatas.set_index('ID')
+    airports = pd.merge(iatas, fetch_geodata(), left_on='IATA', right_index=True)
+    paths = pd.merge(paths, airports, left_on='ID', right_index=True)
+    paths = paths.sort_values('path')
+
+    output_directory = job.fn('hon_community_plots')
+    if not os.path.exists(output_directory):
+        os.makedirs(output_directory)
+
+    def plot_community(paths, community=None):
+        print('Generating plot...')
+        fig = plt.figure(figsize=(6, 4), dpi=400)
+        ax = fig.add_axes([0, 0, 1, 1], projection=ccrs.LambertConformal())
+        ax.set_extent([-128, -64, 22, 49], ccrs.Geodetic())
+
+        shapename = 'admin_1_states_provinces_shp'
+        states_shp = shpreader.natural_earth(resolution='110m',
+                                             category='cultural', name=shapename)
+
+        ax.background_patch.set_visible(False)
+        ax.outline_patch.set_visible(False)
+        plt.title('Communit{} from Higher-Order Network ({}Q{})'.format(
+            'ies' if community is None else 'y ' + str(community),
+            job.sp.year, job.sp.quarter))
+
+        def colorize_state(geometry):
+            facecolor = (0.9375, 0.9375, 0.8594)
+            return {'facecolor': facecolor, 'edgecolor': 'black'}
+
+        ax.add_geometries(
+            shpreader.Reader(states_shp).geometries(),
+            ccrs.PlateCarree(),
+            styler=colorize_state)
+
+        xs = paths.lon.values
+        ys = paths.lat.values
+        colors = paths.flow.values
+        sizes = 10000*paths.flow.values
+
+
+        dots = ax.scatter(xs, ys, transform=ccrs.PlateCarree(), c=colors,
+                          s=sizes, alpha=0.8, zorder=10,
+                          norm=mcolors.LogNorm(vmin=1e-4, vmax=1e-1),
+                          cmap='viridis')
+
+        top_n = paths.sort_values('flow', ascending=False).head(20).index
+        for row in paths.loc[top_n].itertuples():
+            ax.annotate(row.IATA, (row.lon, row.lat),
+                        xycoords=ccrs.PlateCarree()._as_mpl_transform(ax),
+                        fontsize=40*row.flow**0.2, zorder=11, ha='center', va='center')
+        cbax = fig.add_axes([0.9, 0.1, 0.03, 0.8])
+        cbar = plt.colorbar(dots, cax=cbax)
+        cbar.set_label('Flow through node', rotation=90)
+        plt.savefig(os.path.join(
+            output_directory,
+            'hon_community_{}.png'.format(','.join(map(str, community)))))
+        plt.close()
+
+    def get_community(paths, community_path):
+        if len(community_path) == 3:
+            left = tuple([*community_path[:-1], community_path[-1]-1])
+            right = tuple([*community_path[:-1], community_path[-1]+1])
+        else:
+            left = tuple([*community_path, *(-1,)*(3-len(community_path))])
+            right = tuple([*community_path[:-1],
+                           community_path[-1]+1,
+                           *(0,)*(3-len(community_path))])
+        return paths[paths.path.between(left, right)]
+
+    for community in paths.path.apply(lambda x: x[:2]).unique():
+        data = get_community(paths, community)
+        flow = sum(data.flow)
+        if flow > 5e-3:  # arbitrary cutoff
+            print('Plotting {}Q{} community {}, flow {:.3g}'.format(
+                job.sp.year, job.sp.quarter, community, flow))
+            plot_community(data, community=community)
+
+    paths.to_csv(job.fn('hon_communities.csv'))
 
 
 if __name__ == '__main__':
