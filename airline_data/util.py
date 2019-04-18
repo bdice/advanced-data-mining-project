@@ -69,3 +69,13 @@ def sizeof_fmt(num, suffix='B'):
             return "%3.1f%s%s" % (num, unit, suffix)
         num /= 1024.0
     return "%.1f%s%s" % (num, 'Yi', suffix)
+
+
+def get_community(paths, community_path):
+    if len(community_path) == 3:
+        left = tuple([*community_path[:-1], community_path[-1]-1])
+        right = tuple([*community_path[:-1], community_path[-1]+1])
+    else:
+        left = tuple([*community_path, *(-1,)*(3-len(community_path))])
+        right = tuple([*community_path[:-1], community_path[-1]+1, *(0,)*(3-len(community_path))])
+    return paths[paths.path.between(left, right)]

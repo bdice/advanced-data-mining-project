@@ -306,6 +306,7 @@ def combine_itineraries(job):
 @Project.operation
 @Project.pre.after(combine_edgefile)
 @Project.post.isfile('pr_1st_order.png')
+@Project.post.isfile('first_order_pagerank.txt')
 def plot_first_order_pagerank(job):
     import matplotlib
     matplotlib.use('Agg')
@@ -326,6 +327,8 @@ def plot_first_order_pagerank(job):
     pageranks = pd.DataFrame.from_dict(nx.pagerank(G), orient='index')
     pageranks.columns = ['PageRank']
     pageranks.index = pd.to_numeric(pageranks.index)
+    pageranks.sort_values('PageRank', ascending=False).to_csv(
+        job.fn('first_order_pagerank.txt'), header=False)
     iatas = iatas.join(pageranks)
 
     airports = pd.merge(iatas, fetch_geodata(), left_on='IATA', right_index=True)
@@ -555,6 +558,8 @@ def plot_hon_communities(job):
     import pandas as pd
     import cartopy.crs as ccrs
     import cartopy.io.shapereader as shpreader
+    from util import get_community
+
     paths = pd.read_csv(job.fn('hon_infomap.tree'), sep=' ', header=None,
                         skiprows=2, names=['path', 'flow', 'ID', 'node'])
     paths['path'] = paths['path'].apply(lambda x: tuple(map(int, x.split(':'))))
@@ -617,17 +622,6 @@ def plot_hon_communities(job):
             output_directory,
             'hon_community_{}.png'.format(','.join(map(str, community)))))
         plt.close()
-
-    def get_community(paths, community_path):
-        if len(community_path) == 3:
-            left = tuple([*community_path[:-1], community_path[-1]-1])
-            right = tuple([*community_path[:-1], community_path[-1]+1])
-        else:
-            left = tuple([*community_path, *(-1,)*(3-len(community_path))])
-            right = tuple([*community_path[:-1],
-                           community_path[-1]+1,
-                           *(0,)*(3-len(community_path))])
-        return paths[paths.path.between(left, right)]
 
     for community in paths.path.apply(lambda x: x[:2]).unique():
         data = get_community(paths, community)
@@ -704,6 +698,8 @@ def plot_first_order_communities(job):
     import pandas as pd
     import cartopy.crs as ccrs
     import cartopy.io.shapereader as shpreader
+    from util import get_community
+
     paths = pd.read_csv(job.fn('first_order_infomap.tree'), sep=' ',
                         header=None, skiprows=2,
                         names=['path', 'flow', 'ID', 'node'])
@@ -768,17 +764,6 @@ def plot_first_order_communities(job):
             'first_order_community_{}.png'.format(','.join(map(str, community)))))
         plt.close()
 
-    def get_community(paths, community_path):
-        if len(community_path) == 3:
-            left = tuple([*community_path[:-1], community_path[-1]-1])
-            right = tuple([*community_path[:-1], community_path[-1]+1])
-        else:
-            left = tuple([*community_path, *(-1,)*(3-len(community_path))])
-            right = tuple([*community_path[:-1],
-                           community_path[-1]+1,
-                           *(0,)*(3-len(community_path))])
-        return paths[paths.path.between(left, right)]
-
     for community in paths.path.apply(lambda x: x[:1]).unique():
         data = get_community(paths, community)
         flow = sum(data.flow)
@@ -806,17 +791,10 @@ def plot_hon_top_communities(job):
     import cartopy.crs as ccrs
     import cartopy.io.shapereader as shpreader
     from tqdm import tqdm
+    from util import get_community
+
     communities = pd.read_csv(job.fn('hon_communities.csv'), usecols=['path', 'flow', 'ID', 'IATA', 'lon', 'lat'])
     communities.path = communities.path.apply(lambda x: tuple(map(int, x[1:-1].split(', '))))
-
-    def get_community(paths, community_path):
-        if len(community_path) == 3:
-            left = tuple([*community_path[:-1], community_path[-1]-1])
-            right = tuple([*community_path[:-1], community_path[-1]+1])
-        else:
-            left = tuple([*community_path, *(-1,)*(3-len(community_path))])
-            right = tuple([*community_path[:-1], community_path[-1]+1, *(0,)*(3-len(community_path))])
-        return paths[paths.path.between(left, right)]
 
     def plot_communities(all_communities, top_count=5):
         print('Generating plot...')
@@ -862,21 +840,79 @@ def plot_hon_top_communities(job):
         plt.savefig(job.fn('hon_top_communities.png'))
         plt.close()
 
-    def get_community(paths, community_path):
-        if len(community_path) == 3:
-            left = tuple([*community_path[:-1], community_path[-1]-1])
-            right = tuple([*community_path[:-1], community_path[-1]+1])
-        else:
-            left = tuple([*community_path, *(-1,)*(3-len(community_path))])
-            right = tuple([*community_path[:-1],
-                           community_path[-1]+1,
-                           *(0,)*(3-len(community_path))])
-        return paths[paths.path.between(left, right)]
-
     all_communities = [get_community(communities, community) for community in tqdm(
         communities.path.apply(lambda x: x[:2]).unique())]
 
     plot_communities(all_communities, 5)
+
+
+@Project.operation
+@Project.pre.after(plot_hon_communities)
+@Project.post.isfile('hon_community_carriers.json')
+def plot_hon_community_carriers(job):
+    import json
+    import matplotlib
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+    import pandas as pd
+    import os
+    from util import get_community
+
+    communities = pd.read_csv(
+        job.fn('hon_communities.csv'),
+        usecols=['path', 'flow', 'ID'])
+    communities.path = communities.path.apply(lambda x: tuple(map(int, x[1:-1].split(', '))))
+
+    carriers = pd.read_csv(
+        job.fn('Coupon.csv'),
+        usecols=['OriginAirportID', 'DestAirportID', 'TkCarrier'])
+
+    output_directory = job.fn('hon_community_plots')
+    if not os.path.exists(output_directory):
+        os.makedirs(output_directory)
+
+    community_carriers = {}
+
+    def plot_community_carriers(communities, carriers, community):
+        print('Fetching community...')
+        community_data = get_community(communities, community)
+        print('Computing flows...')
+        flows = community_data[['ID', 'flow']].groupby('ID').sum()
+        print('Merging origin flows...')
+        carrier_flows = pd.merge(carriers, flows, left_on='OriginAirportID', right_index=True)
+        carrier_flows = carrier_flows.rename(index=str, columns={'flow': 'OriginFlow'})
+        print('Merging destination flows...')
+        carrier_flows = pd.merge(carrier_flows, flows, left_on='DestAirportID', right_index=True)
+        carrier_flows = carrier_flows.rename(index=str, columns={'flow': 'DestFlow'})
+        print('Computing total flows...')
+        carrier_flows['TotalFlow'] = carrier_flows['OriginFlow'] + carrier_flows['DestFlow']
+        carrier_flows = carrier_flows[['TkCarrier', 'TotalFlow']].groupby('TkCarrier').sum()
+        carrier_flows = carrier_flows.sort_values('TotalFlow', ascending=False)
+        print('Plotting results...')
+        plt.figure(figsize=(6, 4), dpi=300)
+        carrier_flows.TotalFlow.plot.pie(fontsize=20)
+        plt.title('Carriers weighted by flow,\n{year}Q{quarter} Community {community}'.format(
+            **job.sp, community=community), fontsize=26)
+        plt.ylabel(None)
+        plt.tight_layout()
+        plt.savefig(os.path.join(
+            output_directory,
+            'hon_community_carriers_{}.png'.format(
+                ','.join(map(str, community)))))
+        plt.close()
+        community_carriers[str(community)] = carrier_flows.to_dict()
+
+
+    for community in communities.path.apply(lambda x: x[:2]).unique():
+        data = get_community(communities, community)
+        flow = sum(data.flow)
+        if flow > 5e-3:  # arbitrary cutoff
+            print('Plotting {}Q{} community {}, flow {:.3g}'.format(
+                job.sp.year, job.sp.quarter, community, flow))
+            plot_community_carriers(communities, carriers, community)
+
+    with open(job.fn('hon_community_carriers.json'), 'w') as f:
+        json.dump(community_carriers, f)
 
 
 if __name__ == '__main__':

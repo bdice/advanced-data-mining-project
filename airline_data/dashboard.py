@@ -17,6 +17,7 @@ if __name__ == '__main__':
     modules.append(ImageViewer('First-Order PageRank', img_globs=['pr_1st_order.png']))
     modules.append(ImageViewer('HON Communities', img_globs=['hon_community_plots/hon_community_*.png']))
     modules.append(ImageViewer('HON Top 9 Communities', img_globs=['hon_community_plots/hon_community_1,[1-9].png']))
+    modules.append(ImageViewer('HON Top 9 Carriers', img_globs=['hon_community_plots/hon_community_carriers_1,[1-9].png']))
     modules.append(ImageViewer('HON Overlaid 5 Communities', img_globs=['hon_top_communities.png']))
     modules.append(ImageViewer('First-Order Communities', img_globs=['first_order_community_plots/first_order_community_*.png']))
     modules.append(FileList())
