@@ -1,4 +1,10 @@
 # Community Detection on Higher-Order Networks: Identifying Patterns in US Air Traffic
+
+![GitHub](https://img.shields.io/github/license/bdice/advanced-data-mining-project.svg)
+![GitHub top language](https://img.shields.io/github/languages/top/bdice/advanced-data-mining-project.svg)
+[![Visualize with nbviewer](https://img.shields.io/badge/visualize-nbviewer-blue.svg)](https://nbviewer.jupyter.org/github/bdice/advanced-data-mining-project/tree/master/airline_data/exploration/)
+[![Data managed with signac](http://docs.signac.io/en/latest/_images/signac.io-blue.svg)](https://signac.io)
+
 Bradley Dice ([@bdice](https://github.com/bdice/)),
 Shannon Moran ([@shannon-moran](https://github.com/shannon-moran/)),
 Dan McCusker ([@dm1181](https://github.com/dm1181/)),
