@@ -1,7 +1,8 @@
-# Advanced Data Mining Project
+# Community Detection on Higher-Order Networks: Identifying Patterns in US Air Traffic
 Bradley Dice ([@bdice](https://github.com/bdice/)),
 Shannon Moran ([@shannon-moran](https://github.com/shannon-moran/)),
-Dan McCusker ([@dm1181](https://github.com/dm1181/))
+Dan McCusker ([@dm1181](https://github.com/dm1181/)),
+University of Michigan.
 
 ## Project Overview
 
