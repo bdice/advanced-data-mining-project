@@ -102,7 +102,7 @@ The directory [`airline_data/sample_data_2011Q1/`](airline_data/sample_data_2011
 ## References
 
 1. Xu, J., Wickramarathne, T. L., & Chawla, N. V. (2016). Representing higher-order dependencies in networks. _Science Advances_, _2_(5), e1600028. [Publication](https://doi.org/10.1126/sciadv.1600028), [GitHub repository](https://github.com/xyjprc/hon).
-2. [Airline Origin and Destination Survey (DB1B)](https://www.transtats.bts.gov/DatabaseInfo.asp?DB_ID=125).
+2. Bureau of Transportation Statistics, Office of Airline Information. Airline Origin and Destination Survey (DB1B). [Data Source](https://www.transtats.bts.gov/DatabaseInfo.asp?DB_ID=125).
 3. Rosvall, M., Esquivel, A. V, Lancichinetti, A., West, J. D., & Lambiotte, R. (2014). Memory in network flows and its effects on spreading dynamics and community detection. _Nature Communications_, _5_, 4630. [Publication](https://doi.org/10.1038/ncomms5630), [Website](http://www.mapequation.org/), [GitHub repository](https://github.com/mapequation/infomap).
 4. Adorf, C. S., Dodd, P. M., Ramasubramani, V., & Glotzer, S. C. (2018). Simple data and workflow management with the _signac_ framework. _Comput. Mater. Sci._, _146_(C):220-229, 2018. [Publication](https://doi.org/10.1016/j.commatsci.2018.01.035), [Website](https://signac.io), [GitHub repository](https://github.com/glotzerlab/signac).
 5. Koutra, D. [EECS 598 W19 course webpage](http://web.eecs.umich.edu/~dkoutra/courses/W19_598/).
