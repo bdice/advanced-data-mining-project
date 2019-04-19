@@ -2,7 +2,12 @@ cartopy
 findspark
 matplotlib
 networkx
+numpy
 pandas
+pyspark
+scikit-learn
+scipy
 signac
 signac-flow
+signac-dashboard
 tqdm
