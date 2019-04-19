@@ -12,14 +12,15 @@ University of Michigan.
 
 ## Project Overview
 
-In this project, we studied air traffic data from the last 25 years using _higher-order network representations_ [1].
-Many airline passengers travel in round-trips and have layovers in hub airports for their carrier of choice.
-Therefore, the place a passenger flies next strongly depends on the previous airports they've visited.
+In this project, we studied air traffic patterns from 1993 to 2018 using _higher-order network representations_ [1].
+Many airline passengers travel in round-trips and have layovers in airports that act as hubs for their carrier of choice.
+Because of patterns like these, the place a passenger flies next strongly depends on the previous airports they've visited.
 Network analyses that assume first-order Markov processes (random walks) on the network of US airports _cannot capture important dynamics and patterns_ in flight data, and higher-order networks are one solution to this problem.
 
-Our analysis processes nearly one *billion* coupons obtained from the Bureau of Transportation Statistics [2], building higher-order networks on the itineraries and detecting communities with InfoMap [3] in the resulting graph structure.
+Our analysis processes **nearly one billion ticket coupons** covering 25 years of data obtained from the Bureau of Transportation Statistics [2].
+We build higher-order networks on the itineraries and detect communities with InfoMap [3] in the resulting graph structure.
 All data and workflows were managed with the [_signac_ framework](https://signac.io) [4].
-This project was completed for the course Advanced Data Mining with Danai Koutra (EECS 598, Winter 2019) at the University of Michigan [5].
+This project was completed for the course Advanced Data Mining with [Danai Koutra](http://web.eecs.umich.edu/~dkoutra/) (EECS 598, Winter 2019) at the University of Michigan [5].
 
 ## Airline Data Workflow
 
