@@ -20,7 +20,7 @@ Network analyses that assume first-order Markov processes (random walks) on the 
 Our analysis processes **nearly one billion ticket coupons** covering 25 years of data obtained from the Bureau of Transportation Statistics [2].
 We build higher-order networks on the itineraries and detect communities with InfoMap [3] in the resulting graph structure.
 All data and workflows were managed with the [_signac_ framework](https://signac.io) [4].
-This project was completed for the course Advanced Data Mining with [Danai Koutra](http://web.eecs.umich.edu/~dkoutra/) (EECS 598, Winter 2019) at the University of Michigan [5].
+This project was completed for the course Advanced Data Mining with [Danai Koutra](http://web.eecs.umich.edu/~dkoutra/) (EECS 598, Winter 2019) at the University of Michigan [5]. [Read the poster](Poster.pdf).
 
 ## Airline Data Workflow
 
