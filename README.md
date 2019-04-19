@@ -65,7 +65,7 @@ Run `python project.py run --progress --show-traceback` to execute the workflow.
 16. `hon_infomap`: Executes InfoMap algorithm, producing hierarchical cluster outputs in `hon_infomap.clu` and `hon_infomap.tree`.
 17. `plot_hon_communities`: Plots each community with more than 0.5% of the network's flow, saved in `hon_community_plots/hon_community_*.png`.
 18. `first_order_prepare_infomap`: Translates the format of the first-order network to the [Pajek format](http://www.mapequation.org/code.html#Pajek-format) for processing with InfoMap. Produces `first_order_infomap.txt`.
-19. `plot_first_order_communities`: Plots each community with more than 0.5% of the network's flow, saved in `first_order_community_plots/first_order_community_*.png.
+19. `plot_first_order_communities`: Plots each community with more than 0.5% of the network's flow, saved in `first_order_community_plots/first_order_community_*.png`.
 20. `plot_hon_top_communities`: Creates a plot similar to the previous HON community plots, overlaying the top 5 communities and coloring them by their respective clusters in `hon_top_communities.png`.
 21. `plot_hon_community_carriers`: For each community with more than 0.5% of the network's flow, plot a pie chart of different airlines' presence within that community, weighted by the sum of origin and destination carrier flows. Produces `hon_community_plots/hon_community_carriers_*.png` and `hon_community_carriers.json`.
 
