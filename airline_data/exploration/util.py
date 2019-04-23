@@ -6,7 +6,7 @@ def hdfs_fn(job, filename):
     return os.path.join(job._project.config['hdfs_dir'], job._id, filename)
 
 
-def fetch_geodata():
+def fetch_geodata(continental_only=True):
     import pandas as pd
     import signac
     project = signac.get_project()
@@ -29,8 +29,9 @@ def fetch_geodata():
     # Ignore airports with erroneous data near (0, 0)
     geodata = geodata[geodata.lon < -65]
 
-    # Drop data for Alaska and Hawaii
-    geodata = geodata[geodata.lon > -130]
+    if continental_only:
+        # Drop data for Alaska and Hawaii
+        geodata = geodata[geodata.lon > -130]
     return geodata
 
 
