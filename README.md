@@ -20,7 +20,29 @@ Network analyses that assume first-order Markov processes (random walks) on the 
 Our analysis processes **nearly one billion ticket coupons** covering 25 years of data obtained from the Bureau of Transportation Statistics [2].
 We build higher-order networks on the itineraries and detect communities with InfoMap [3] in the resulting graph structure.
 All data and workflows were managed with the [_signac_ framework](https://signac.io) [4].
-This project was completed for the course Advanced Data Mining with [Danai Koutra](http://web.eecs.umich.edu/~dkoutra/) (EECS 598, Winter 2019) at the University of Michigan [5]. [Read the poster](Poster.pdf).
+This project was completed for the course Advanced Data Mining with [Danai Koutra](http://web.eecs.umich.edu/~dkoutra/) (EECS 598, Winter 2019) at the University of Michigan [5]. Read [the poster](Poster.pdf) or [the report](reports/04_Final/W19_EECS598_FinalReport.pdf).
+
+## Results
+
+The primary results of our project are documented in [this report](reports/04_Final/W19_EECS598_FinalReport.pdf). Some of our major findings are below.
+
+### Finding 1: Higher-Order Networks Exhibit Meaningful Clusters
+
+![Communities in First-Order vs. Higher-Order Networks](https://raw.githubusercontent.com/bdice/advanced-data-mining-project/master/reports/04_Final/figs/FON_vs_HON.png)
+
+Shown are the communities identified using InfoMap for (a) a first order network and (b) a higher-order network. Only one community (the largest) is shown for the first order network, while the 5 largest communities are shown for the HON. Data is a snapshot from 2011 Q1. Node colors indicate communities, and sizes correspond to flow volume, defined in the text. Labels indicate three letter IATA airport codes.
+
+### Finding 2: Airline Mergers Do Not Significantly Change Network Structure
+
+![Data from Delta-Northwest Merger, 2010](https://raw.githubusercontent.com/bdice/advanced-data-mining-project/master/reports/04_Final/figs/DL_NW_merger.png)
+
+Shown are data for (a) 2004 Q3 and (b) 2013 Q1. Delta (DL) and Northwest (NW) officially merged in 2010 Q1. Interestingly, we observe that this merger did not lead to major structural changes in the networks. Community numbers in the headers correspond to the order in which they were found by the InfoMap algorithm, and are not otherwise meaningful. For each community, the associated pie chart indicates the carriers represented, weighted by flow through the community. In the maps, node color and size indicates flow in the community (see colorbar). Labels indicate three letter IATA airport codes.
+
+### Finding 3: Airport PageRanks Show Seasonal Dependence
+
+![Seasonal Changes in First-Order PageRank](https://raw.githubusercontent.com/bdice/advanced-data-mining-project/master/reports/04_Final/figs/seasonality_map.png)
+
+Shown above is seasonality of U.S. airports, as measured by PageRank in the first order network. Node colors correspond to the PageRank seasonality correlation coefficient described in the text and indicated on the colorbar. Node sizes correspond to PageRank in 2018 Q3, and labels indicate three letter IATA airport codes.
 
 ## Airline Data Workflow
 
